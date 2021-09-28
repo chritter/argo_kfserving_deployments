@@ -1,23 +1,9 @@
 # Predict on a InferenceService using a Custom Image
 
-## Setup
+## Creation of Docker Image
 
-1. Your ~/.kube/config should point to a cluster with [KFServing installed](https://github.com/kubeflow/kfserving/#install-kfserving).
-2. Your cluster's Istio Ingress gateway must be [network accessible](https://istio.io/latest/docs/tasks/traffic-management/ingress/ingress-control/).
-
-## Build and push the sample Docker Image
-
-The goal of custom image support is to allow users to bring their own wrapped model inside a container and serve it with KFServing. Please note that you will need to ensure that your container is also running a web server e.g. Flask to expose your model endpoints.
-
-In this example we use Docker to build the sample python server into a container. To build and push with Docker Hub, run these commands replacing {username} with your Docker Hub username:
-
-```
-# Build the container on your local machine
-docker build -t {username}/custom-sample .
-
-# Push the container to docker registry
-docker push {username}/custom-sample
-```
+I build the docker image with `Dockerfile` and pushed it to `chritter/custom-sample`. With that the next step of creating
+the inference server can be initated.
 
 ## Create the InferenceService
 
@@ -34,6 +20,29 @@ Expected Output
 ```
 $ inferenceservice.serving.kubeflow.org/custom-sample created
 ```
+
+## Check if deployment works
+
+`kubectl get inferenceservice`
+
+Status == False  indicates there is a problem. Dive deeper and get description
+
+`kubectl describe inferenceservice custom-sample`
+
+results in error message:
+
+
+    Predictor:
+      Name:  custom-sample-predictor-default-vl89g
+Events:
+  Type     Reason         Age                From                  Message
+  ----     ------         ----               ----                  -------
+  Warning  InternalError  50s                kfserving-controller  Operation cannot be fulfilled on services.serving.knative.dev "custom-sample-predictor-default": the object has been modified; please apply your changes to the latest version and try again
+  Normal   Updated        48s (x2 over 50s)  kfserving-controller  Updated InferenceService "custom-sample"
+
+
+> Further work below was not testsed on AAW.
+
 
 ## Run a prediction
 The first step is to [determine the ingress IP and ports](../../../../README.md#determine-the-ingress-ip-and-ports) and set `INGRESS_HOST` and `INGRESS_PORT`
