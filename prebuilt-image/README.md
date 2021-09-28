@@ -19,6 +19,28 @@ Expected Output
 inferenceservice.serving.kubeflow.org/custom-prebuilt-image
 ```
 
+
+## Check if deployment works
+
+`kubectl get inferenceservice`
+
+Status == False  indicates there is a problem. Dive deeper and get description
+
+`kubectl describe inferenceservice custom-prebuilt-image`
+
+results in error message:
+
+
+      Name:  custom-prebuilt-image-predictor-default-ds9hz
+Events:
+  Type     Reason         Age                    From                  Message
+  ----     ------         ----                   ----                  -------
+  Warning  InternalError  3m32s                  kfserving-controller  Operation cannot be fulfilled on services.serving.knative.dev "custom-prebuilt-image-predictor-default": the object has been modified; please apply your changes to the latest version and try again
+  Normal   Updated        3m31s (x2 over 3m33s)  kfserving-controller  Updated InferenceService "custom-prebuilt-image"
+
+
+> Further work below was not testsed on AAW.
+
 ## Run a prediction
 The first step is to [determine the ingress IP and ports](../../../../README.md#determine-the-ingress-ip-and-ports) and set `INGRESS_HOST` and `INGRESS_PORT`
 
