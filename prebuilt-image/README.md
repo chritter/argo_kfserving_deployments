@@ -1,9 +1,8 @@
 # Predict on a InferenceService using a prebuilt image
 
-## Setup
+In this example we use a pre-build docker image which contains 
+an object detector machine learning model and deploy it.
 
-1. Your ~/.kube/config should point to a cluster with [KFServing installed](https://github.com/kubeflow/kfserving/#install-kfserving).
-2. Your cluster's Istio Ingress gateway must be [network accessible](https://istio.io/latest/docs/tasks/traffic-management/ingress/ingress-control/).
 
 ## Create the InferenceService
 
@@ -16,7 +15,7 @@ kubectl apply -f custom.yaml
 Expected Output
 
 ```
-inferenceservice.serving.kubeflow.org/custom-prebuilt-image
+inferenceservice.serving.kubeflow.org/max-object-detector created
 ```
 
 
@@ -24,58 +23,24 @@ inferenceservice.serving.kubeflow.org/custom-prebuilt-image
 
 `kubectl get inferenceservice`
 
-Status == False  indicates there is a problem. Dive deeper and get description
+gives you state of the deployment via the `Ready` flag. Use
 
-`kubectl describe inferenceservice custom-prebuilt-image`
+`kubectl describe inferenceservice max-object-detector`
 
-results in error message:
-
-
-      Name:  custom-prebuilt-image-predictor-default-ds9hz
-Events:
-  Type     Reason         Age                    From                  Message
-  ----     ------         ----                   ----                  -------
-  Warning  InternalError  3m32s                  kfserving-controller  Operation cannot be fulfilled on services.serving.knative.dev "custom-prebuilt-image-predictor-default": the object has been modified; please apply your changes to the latest version and try again
-  Normal   Updated        3m31s (x2 over 3m33s)  kfserving-controller  Updated InferenceService "custom-prebuilt-image"
-
-
-> Further work below was not testsed on AAW.
+for more details.
 
 ## Run a prediction
-The first step is to [determine the ingress IP and ports](../../../../README.md#determine-the-ingress-ip-and-ports) and set `INGRESS_HOST` and `INGRESS_PORT`
 
-This example uses the [codait/max-object-detector](https://github.com/IBM/MAX-Object-Detector) image. The Max Object Detector api server expects a POST request to the `/model/predict` endpoint that includes an `image` multipart/form-data and an optional `threshold` query string.
+To run predict an object on the provided image `anil-arora.jpg`
+we send a request to the KFServing API via
 
-```
-MODEL_NAME=custom-prebuilt-image
-SERVICE_HOSTNAME=$(kubectl get inferenceservice ${MODEL_NAME} -o jsonpath='{.status.url}' | cut -d "/" -f 3)
-curl -v -F "image=@dog-human.jpg" http://${INGRESS_HOST}:${INGRESS_PORT}/model/predict -H "Host: ${SERVICE_HOSTNAME}"
-```
+`./predict.sh`
 
-Expected output
+which should return
 
 ```
-*   Trying 169.47.250.204...
-* TCP_NODELAY set
-* Connected to 169.47.250.204 (169.47.250.204) port 80 (#0)
-> POST /model/predict HTTP/1.1
-> Host: custom-prebuilt-image-predictor-default.default.example.com
-> User-Agent: curl/7.64.1
-> Accept: */*
-> Content-Length: 125759
-> Content-Type: multipart/form-data; boundary=------------------------cfebb5b7485962f9
-> Expect: 100-continue
->
-< HTTP/1.1 100 Continue
-* We are completely uploaded and fine
-< HTTP/1.1 200 OK
-< content-length: 377
-< content-type: application/json
-< date: Wed, 26 Feb 2020 18:13:40 GMT
-< server: istio-envoy
-< x-envoy-upstream-service-time: 5312
-<
-{"status": "ok", "predictions": [{"label_id": "1", "label": "person", "probability": 0.944034993648529, "detection_box": [0.1242099404335022, 0.12507186830043793, 0.8423267006874084, 0.5974075794219971]}, {"label_id": "18", "label": "dog", "probability": 0.8645511865615845, "detection_box": [0.10447660088539124, 0.1779915690422058, 0.8422801494598389, 0.7320017218589783]}]}
-* Connection #0 to host 169.47.250.204 left intact
-* Closing connection 0
+{"status": "ok", "predictions": [{"label_id": "32", "label": "tie", "probability": 0.7970063090324402, "detection_box": [0.6801750659942627, 0.2899482250213623, 0.9958771467208862, 0.5204325914382935]}]}
+* Connection #0 to host max-object-detector.seldonp.aaw.cloud.statcan.ca left intact
 ```
+
+
